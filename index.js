@@ -1,116 +1,168 @@
-const boxes = document.querySelectorAll(".box");
-const gameInfo = document.querySelector(".game-info");
-const newGameBtn = document.querySelector(".btn");
+const userTab = document.querySelector("[data-userWeather]");
+const searchTab = document.querySelector("[data-searchWeather]");
+const userContainer = document.querySelector(".weather-container");
 
+const grantAccessContainer = document.querySelector(".grant-location-container");
+const searchForm = document.querySelector("[data-searchForm]");
+const loadingScreen = document.querySelector(".loading-container");
+const userInfoContainer = document.querySelector(".user-info-container");
 
-let currentPlayer;
-let gameGrid;
+//initially vairables need????
 
-const winningPositions = [
-    [0,1,2],
-    [3,4,5],
-    [6,7,8],
-    [0,3,6],
-    [1,4,7],
-    [2,5,8],
-    [0,4,8],
-    [2,4,6]
-];
+let oldTab = userTab;
+const API_KEY = "d1845658f92b31c64bd94f06f7188c9c";
+oldTab.classList.add("current-tab");
+getfromSessionStorage();
 
-//let's create a function to initialise the game
-function initGame() {
-    currentPlayer = "X";
-    gameGrid = ["","","","","","","","",""];
-    //UI pr empty bhi karna padega boxes ko
-    boxes.forEach((box, index) => {
-        box.innerText = "";
-        boxes[index].style.pointerEvents = "all";
-        //one more thing is missing, initialise box with css properties again
-        box.classList = `box box${index+1}`;
-    });
-    newGameBtn.classList.remove("active");
-    gameInfo.innerText = `Current Player - ${currentPlayer}`;
-}
+function switchTab(newTab) {
+    if(newTab != oldTab) {
+        oldTab.classList.remove("current-tab");
+        oldTab = newTab;
+        oldTab.classList.add("current-tab");
 
-initGame();
-
-function swapTurn() {
-    if(currentPlayer === "X") {
-        currentPlayer = "O";
-    }
-    else {
-        currentPlayer = "X";
-    }
-    //UI Update
-    gameInfo.innerText = `Current Player - ${currentPlayer}`;
-}
-
-function checkGameOver() {
-    let answer = "";
-
-    winningPositions.forEach((position) => {
-        //all 3 boxes should be non-empty and exactly same in value
-        if( (gameGrid[position[0]] !== "" || gameGrid[position[1]] !== "" || gameGrid[position[2]] !== "") 
-            && (gameGrid[position[0]] === gameGrid[position[1]] ) && (gameGrid[position[1]] === gameGrid[position[2]])) {
-
-                //check if winner is X
-                if(gameGrid[position[0]] === "X") 
-                    answer = "X";
-                else {
-                    answer = "O";
-                } 
-                    
-
-                //disable pointer events
-                boxes.forEach((box) => {
-                    box.style.pointerEvents = "none";
-                })
-
-                //now we know X/O is a winner
-                boxes[position[0]].classList.add("win");
-                boxes[position[1]].classList.add("win");
-                boxes[position[2]].classList.add("win");
-            }
-    });
-
-    //it means we have a winner
-    if(answer !== "" ) {
-        gameInfo.innerText = `Winner Player - ${answer}`;
-        newGameBtn.classList.add("active");
-        return;
-    }
-
-    //We know, NO Winner Found, let's check whether there is tie
-    let fillCount = 0;
-    gameGrid.forEach((box) => {
-        if(box !== "" )
-            fillCount++;
-    });
-
-    //board is Filled, game is TIE
-    if(fillCount === 9) {
-        gameInfo.innerText = "Game Tied !";
-        newGameBtn.classList.add("active");
-    }
-
-}
-
-function handleClick(index) {
-    if(gameGrid[index] === "" ) {
-        boxes[index].innerText = currentPlayer;
-        gameGrid[index] = currentPlayer;
-        boxes[index].style.pointerEvents = "none";
-        //swap karo turn ko
-        swapTurn();
-        //check koi jeet toh nahi gya
-        checkGameOver();
+        if(!searchForm.classList.contains("active")) {
+            //kya search form wala container is invisible, if yes then make it visible
+            userInfoContainer.classList.remove("active");
+            grantAccessContainer.classList.remove("active");
+            searchForm.classList.add("active");
+        }
+        else {
+            //main pehle search wale tab pr tha, ab your weather tab visible karna h 
+            searchForm.classList.remove("active");
+            userInfoContainer.classList.remove("active");
+            //ab main your weather tab me aagya hu, toh weather bhi display karna poadega, so let's check local storage first
+            //for coordinates, if we haved saved them there.
+            getfromSessionStorage();
+        }
     }
 }
 
-boxes.forEach((box, index) => {
-    box.addEventListener("click", () => {
-        handleClick(index);
-    })
+userTab.addEventListener("click", () => {
+    //pass clicked tab as input paramter
+    switchTab(userTab);
 });
 
-newGameBtn.addEventListener("click", initGame);
+searchTab.addEventListener("click", () => {
+    //pass clicked tab as input paramter
+    switchTab(searchTab);
+});
+
+// //check if cordinates are already present in session storage
+// function getfromSessionStorage() {
+//     const localCoordinates = sessionStorage.getItem("user-coordinates");
+//     if(!localCoordinates) {
+//         //agar local coordinates nahi mile
+//         grantAccessContainer.classList.add("active");
+//     }
+//     else {
+//         const coordinates = JSON.parse(localCoordinates);
+//         fetchUserWeatherInfo(coordinates);
+//     }
+
+// }
+
+// async function fetchUserWeatherInfo(coordinates) {
+//     const {lat, lon} = coordinates;
+//     // make grantcontainer invisible
+//     grantAccessContainer.classList.remove("active");
+//     //make loader visible
+//     loadingScreen.classList.add("active");
+
+//     //API CALL
+//     try {
+//         const response = await fetch(
+//             `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&appid=${API_KEY}&units=metric`
+//           );
+//         const  data = await response.json();
+
+//         loadingScreen.classList.remove("active");
+//         userInfoContainer.classList.add("active");
+//         renderWeatherInfo(data);
+//     }
+//     catch(err) {
+//         loadingScreen.classList.remove("active");
+//         //HW
+
+//     }
+
+// }
+
+// function renderWeatherInfo(weatherInfo) {
+//     //fistly, we have to fethc the elements 
+
+//     const cityName = document.querySelector("[data-cityName]");
+//     const countryIcon = document.querySelector("[data-countryIcon]");
+//     const desc = document.querySelector("[data-weatherDesc]");
+//     const weatherIcon = document.querySelector("[data-weatherIcon]");
+//     const temp = document.querySelector("[data-temp]");
+//     const windspeed = document.querySelector("[data-windspeed]");
+//     const humidity = document.querySelector("[data-humidity]");
+//     const cloudiness = document.querySelector("[data-cloudiness]");
+
+//     //fetch values from weatherINfo object and put it UI elements
+//     cityName.innerText = weatherInfo?.name;
+//     countryIcon.src = `https://flagcdn.com/144x108/${weatherInfo?.sys?.country.toLowerCase()}.png`;
+//     desc.innerText = weatherInfo?.weather?.[0]?.description;
+//     weatherIcon.src = `http://openweathermap.org/img/w/${weatherInfo?.weather?.[0]?.icon}.png`;
+//     temp.innerText = weatherInfo?.main?.temp;
+//     windspeed.innertext = weatherInfo?.wind?.speed;
+//     humidity.innertext = weatherInfo?.main?.humidity;
+//     cloudiness.innerText = weatherInfo?.clouds?.all;
+
+
+// }
+
+// function getLocation() {
+//     if(navigator.geolocation) {
+//         navigator.geolocation.getCurrentPosition(showPosition);
+//     }
+//     else {
+//         //HW - show an alert for no gelolocation support available
+//     }
+// }
+
+// function showPosition(position) {
+
+//     const userCoordinates = {
+//         lat: position.coords.latitude,
+//         lon: position.coords.longitude,
+//     }
+
+//     sessionStorage.setItem("user-coordinates", JSON.stringify(userCoordinates));
+//     fetchUserWeatherInfo(userCoordinates);
+
+// }
+
+// const grantAccessButton = document.querySelector("[data-grantAccess]");
+// grantAccessButton.addEventListener("click", getLocation);
+
+// const searchInput = document.querySelector("[data-searchInput]");
+
+// searchForm.addEventListener("submit", (e) => {
+//     e.preventDefault();
+//     let cityName = searchInput.value;
+
+//     if(cityName === "")
+//         return;
+//     else 
+//         fetchSearchWeatherInfo(cityName);
+// })
+
+// async function fetchSearchWeatherInfo(city) {
+//     loadingScreen.classList.add("active");
+//     userInfoContainer.classList.remove("active");
+//     grantAccessContainer.classList.remove("active");
+
+//     try {
+//         const response = await fetch(
+//             `https://api.openweathermap.org/data/2.5/weather?q=${city}&appid=${API_KEY}&units=metric`
+//           );
+//         const data = await response.json();
+//         loadingScreen.classList.remove("active");
+//         userInfoContainer.classList.add("active");
+//         renderWeatherInfo(data);
+//     }
+//     catch(err) {
+//         //hW
+//     }
+// }
